@@ -1,0 +1,80 @@
+# Gene Expression Barplot Template (LPS and UT)
+
+
+``` r
+library(tidyverse)
+```
+
+    ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+    ✔ dplyr     1.1.4     ✔ readr     2.1.5
+    ✔ forcats   1.0.0     ✔ stringr   1.5.1
+    ✔ ggplot2   3.5.2     ✔ tibble    3.3.0
+    ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+    ✔ purrr     1.0.4     
+    ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ✖ dplyr::filter() masks stats::filter()
+    ✖ dplyr::lag()    masks stats::lag()
+    ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+
+``` r
+library(ggpubr)
+
+# Raw data for each condition
+raw_data <- tibble(
+  condition = rep(c("NT Untreated", "KD Untreated", "NT LPS", "KD LPS"), each = 3),
+  expr = c(
+    50, 60, 70,         # NT Untreated
+     10, 20, 30,         # KD Untreated
+    60, 70, 80,          # NT LPS
+     10, 25, 30          # KD LPS
+  )                                    #CHANGE (enter counts above)
+)
+
+# Summary stats
+summary_data <- raw_data %>%
+  group_by(condition) %>%
+  summarise(mean_expr = mean(expr), sd = sd(expr), .groups = "drop") %>%
+  mutate(condition = factor(condition, levels = c("NT Untreated", "KD Untreated", "NT LPS", "KD LPS")))
+
+pvals <- tibble(
+  group1 = c("NT Untreated", "NT LPS"),
+  group2 = c("KD Untreated", "KD LPS"),
+  p_value = c("0.057", "1.5e-03"),    #CHANGE p_value (write "ns" if not significant)
+   y_position = c(90, 90)   #CHANGE position of padj text based on top count 
+)
+# Plot
+ggplot(summary_data, aes(x = condition, y = mean_expr)) +
+  geom_col(fill = "gray70", color = "black", width = 0.3) +
+  geom_errorbar(aes(ymin = mean_expr - sd, ymax = mean_expr + sd), width = 0.1) +
+  geom_point(data = raw_data, aes(x = condition, y = expr), 
+             position = position_jitter(width = 0.1), size = 3, color = "black", alpha = 0.8) +
+  stat_pvalue_manual(
+    pvals,
+    label = "p_value",
+    xmin = "group1",
+    xmax = "group2",
+    y.position = "y_position",
+    tip.length = 0.01
+  ) +
+  labs(
+    title = "Template Expression (LPS and UT)",    #CHANGE title
+    y = "Normalized Counts",
+    x = NULL,
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black"),
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    plot.caption = element_text(face = "bold", hjust = 0.5)
+  ) +
+  ylim(0, 100)                      #CHANGE range based on counts
+```
+
+![](gene_expression_template_lps_ut_files/figure-commonmark/unnamed-chunk-1-1.png)
+
+``` r
+ggsave("template_expression_lps_ut.png", width = 7, height = 5, dpi = 300, bg = "white")                #CHANGE file name
+```
